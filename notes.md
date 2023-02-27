@@ -334,4 +334,3 @@ or:
 ````mongo
 db.student.remove(null)
 ````
-
