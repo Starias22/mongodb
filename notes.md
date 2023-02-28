@@ -22,9 +22,23 @@ db
 
 ### Show all available databases
 
+simple show
+
 ````mongo
 show dbs
 ````
+
+````mongo
+db.getMongo().getDBNames()
+````
+
+That method returns an array that contains all the databases.
+
+````mongo
+db.adminCommand('listDatabases')
+````
+
+That command return anobject containing all the available databases with more accurate details, concerning the size occupied.
 
 ### Create or Switch to another database
 
@@ -39,6 +53,20 @@ The database ````my_new_database```` is created in case of non-existance.
 ````mongo
 show collections
 ````
+
+or
+
+````mongo
+show tables
+````
+
+or
+
+````mongo
+db.getCollectionNames()
+````
+
+The last method returns an array that contains all collections.
 
 It shows all available collections in the selected(current) database.
 
@@ -64,7 +92,7 @@ Drop the selected database with:
 db.dropDatabase()
 ````
 
-## CRUD operations
+## CRUD basics operations
 
 ### Create a collection
 
@@ -249,6 +277,14 @@ db.student.findOne({name:'Jane'},{_id:0,good:1})
 db.student.updateOne({name:'Jane'},{$set:{new1:'xxx',new2:true,name:'JaneX'}})
 ````
 
+or
+
+````mongo
+db.student.updateOne({name:'Jane'},{$set:{new1:'xxx',new2:true,name:'JaneX'}})
+````
+
+By default, ````update```` updates the first document matching the specified query criteria.
+
 * Verify the result
 
 ````mongo
@@ -260,6 +296,18 @@ db.student.findOne({name:'JaneX'},{_id:false})
 ````mongo
 db.student.updateMany({},{$set:{good:false}})
 ````
+
+or
+
+````mongo
+db.student.update({},{$set:{good:false},{multi:true}})
+````
+
+````update```` can take a third(optional) parameter, which is an object with ````multi```` as key.
+
+By default, ````multi```` ````false```` and then ony the first matching document is updted.
+
+By setting ````multi```` to ````true````, we can also update all documents matching a condition.
 
 * Checks your result
 
@@ -320,12 +368,6 @@ db.student.deleteOne({age:12})
 To remove all documents of student, use:
 
 ````mongo
-db.student.remove()
-````
-
-or:
-
-````mongo
 db.student.remove({})
 ````
 
@@ -333,4 +375,194 @@ or:
 
 ````mongo
 db.student.remove(null)
+````
+
+### Query criteria array using positional operator
+
+* create a collection named mark
+
+````mongo
+db.createCollection('mark')
+````
+
+* assure the collection is created
+
+````mongo
+show collections
+````
+
+* add new mark values to the collection
+
+````mongo
+db.mark.insertOne({values:[15,20,13,14]})
+db.mark.insertMany([
+    {values:[2,13,7,12]},
+    {values:[12,11,6,11]},
+    {values:[2,11,13,12]},
+    {values:[5,1,11,1]}
+    ])
+````
+
+* show the mark values inserted in the collection
+
+````mongo
+db.mark.find(null,{_id:false})
+````
+
+* pretty show  the mark values that contain 12
+
+````mongo
+db.mark.find({values:12},{_id:false}).pretty()
+````
+
+* Let's set all mark values equal to 11, to 12
+
+````mongo
+db.mark.updateMany({values:11},{$set:{'values.$':12}})
+````
+
+* check the result: there could not be any 11 in the mark collection now
+
+````mongo
+db.mark.find(null,{_id:false}).pretty()
+
+````
+
+### More update operators
+
+\$push: add a value to an array
+
+\$pull: remove a value from an array
+
+\$pop: remove the first or the last value of an array
+
+## Query operators: not,and,or
+
+* Create a collection named person
+
+````mongo
+db.createCollection('person)
+````
+
+* check the connection is created
+
+````mongo
+show collections
+````
+
+* insert some objects in that collection
+
+````mongo
+db.person.insertMany([
+    {name:'Jonh',age:23},
+    {name:'Emilie',age:15},
+    {name:'Pio'},
+    {name:'André',age:13},
+    {name:'Saoul'},
+    {name:'André',age:13},
+    {name:'Gildas',age:13}
+])
+````
+
+* check insertion
+
+````mongo
+db.person.find().pretty()
+````
+
+### \$not
+
+* find  the name of all people whose age is not 13
+
+````mongodb
+db.person.find({age:{$not:13}},{_id:0,name:1})
+````
+
+* find  the name of all people whose age is not  null(is  specified)
+
+````mongodb
+db.person.find({age:{$not:null}},{_id:0,name:1})
+````
+
+### \$and
+
+* find the  first person whose name is 'Gildas' and age is 13
+
+````mongodb
+db.person.findOne({
+    $and:[
+        {name:'Gildas'},
+        {age:13}
+        ]
+        })
+````
+
+### \$or
+
+* find all people whose name is 'Gildas' or age is 13 or age is null.
+
+````mongodb
+db.person.find({
+    $or:[
+        {name:'Gildas'},
+        {age:13},
+        {age:null}
+        ]
+        })
+````
+
+### \$in
+
+That operator works as same as the \$or and \$and operators.
+
+### Comparaison operators: \$gte, \$lte, \$gt, \$lt
+
+The four folllowing operator are used as same as the $not operator.
+
+#### \$gte
+
+greater than or equal
+
+#### \$lte
+
+less than or equal
+
+#### \$gt
+
+greater than
+
+#### \$lt
+
+less than
+
+## limit,skip,sort,count
+
+* limit first three(3) documents of person
+
+````mongo
+db.find().limit()
+````
+
+* list all ages in ASC order
+
+````mongo
+db.find(null,{_id:false,age:true}).sort({age:1})
+````
+
+* list all names in DESC order
+
+````mongo
+db.find(null,{_id:false,name:true}).sort({name:-11})
+````
+
+* count all documents of persons
+
+````mongo
+db.find().count()
+````
+
+* list from the third document to end
+
+````mongo
+db.find().skip(3)
 ````
