@@ -566,3 +566,244 @@ db.find().count()
 ````mongo
 db.find().skip(3)
 ````
+
+## Insert document
+
+For each document inserted an _id is generated.
+An id is an hexadecimal object with 12 byes:
+
+* the 4 first: the timestamp is seconds
+* the next 3: the machine id(identifier)
+* the next 2: the process id
+* the last 3: the number of the _id
+An id is a primary key, that assure the uniqueness for each document.
+
+We can either specify or not the \_id during insertion, as long as the _id is unique.
+
+## Indexes: createIndex, dropIndex, getIndexes, unique, sparse, partial
+
+Indexes are constraints we make to a filed of collections in a database.
+
+* Let us have a set of books inside a book collection.
+
+````mongo
+db.createCollection('book')
+db.insertMany([
+    {bname:'Les tresseurs de corde',author:'Jean Pliya'},
+    {bname:'Le gong a bagaiyé',author:'Appolinaire AGBAZAHOU'},
+    {bname:'La secrétaire particulière',author:'Jean Pliya'},
+    {bname:'Un piège sans fin',author:'Ousmane Sembène'},
+    {bname:'Une si longue lettre',author:'Mariama Ba'},
+    {bname:'Sous l'orage',author:'Seydou Badian'}
+
+])
+````
+
+* Now  pretty show all books in the collection
+
+````mongo
+db.book.find().pretty()
+````
+
+* show all indexe(s) in the collection
+
+````mongo
+db.book.getIndexes()
+````
+
+That mehod returns an array containing all indexes in the book collection, with their details.
+
+Actually, there is only one indexe created.
+
+In fact, mongodb, by default creates  unique indexe on the _id field(the primary key), that prevent having two or many documents with the same \_id.
+
+* Let us create an indexe on the bname field of our book collection
+
+````mongo
+db.book.createIndexes({my_index:1})
+````
+
+We've specified in an object the field concerned as key, and it's value as the value of the object.
+
+The concerned indexe will be created if not exist
+
+Typically, we use 1 or -1 for value of index; 1 for ASC indexes and -1 for DESC indexes.
+
+````mongo
+db.collocetion.createIndex({field:1})
+````
+
+* Now print the list of indexes again
+
+````mongo
+db.book.getIndexes()
+````
+
+Now we have two indexes created.
+
+* Note that there is the name of the each indexe among the details on indexes.
+
+By default, mongodb names, for example, ind_1 an indexe on a field ind with the value 1.
+
+We can provide the name of our index as another argument to the createCollection method.
+
+* Create an indexe named 'index on author name' on the author field, whith the value 1
+
+````mongo
+db.book.createIndexe({author:1},{name:'index on author name'})
+````
+
+* List indexes to check the result
+
+````mongo
+db.book.getIndexes()
+````
+
+We use  the dropIndex method to drop an indexe.
+
+We can specifier either the name of the indexe to drop or the concerned field with the value of the indexe for example when we don't know the name of the indexe.
+
+* drop the index we just created on the author field:
+
+````mongo
+db.book.dropIndex('index on author name')
+````
+
+* drop the index we created on the bname field above
+
+````mongo
+db.book.dropIndex({bname:1})
+````
+
+createIndex can take another (optional) parameter, which is an oject that specify whitch kind of indexe will be created.
+
+* Let's create an unique index on the bname field.
+
+````mongo
+db.book.createIndex({bname:1},{name:'book name is unique'},{unique:true})
+````
+
+* Show the available indexes for checking
+
+````mongo
+db.book.getIndexes()
+````
+
+Now we cannot have two documents with the same book name, because unique index is set on bname field:
+
+* Try to insert a document named 'Les tresseurs de corde' and you'll get an issue.
+
+````mongo
+db.book.insertOne(b,ame:'Les tresseurs de corde',author:'another')
+````
+
+* show all the books in the collection
+
+````mongo
+db.book.find().pretty()
+````
+
+* insert the following documents into the collection an you'll get an error
+
+````mongo
+db.book.insertOne({author:'Victor Hugo'})
+db.book.insertOne({
+    author:'Jean de la Fontaine',
+    bname:'Le laboureur et ses enfants'
+    })
+db.book.insertOne({author:'Daté Akayi Barnabé'})
+
+````
+
+In fact, when we don't specified a value for a field during insertion of a document, it's set to null. In the example above we've inserted two documents without bname, so both their bname will be set to null,  and that violates the unique key set on the bname field.
+
+To solve that issue, and so allow having two or more documents without bname specified, we can use sparse indexe.
+
+* First of all drop the index we created above, on the bname field.
+
+````mongo
+db.book.dropIndex({bname:1})
+````
+
+* Now recreate the indexe by setting it unique and sparse indexex
+
+````mongo
+db.book.createIndex({bname:1},{unique:true,sparse:true})
+````
+
+* Show indexes list to check
+
+````mongo
+db.book.getIndexes()
+````
+
+We can drop all non _id indexes by usind dropIndexes
+
+* Drop all indexes in the book collection:
+
+````mongo
+db.book.dropIndexes()
+````
+
+### Partial indexes
+
+Partial indexes is the generalisation of sparse indexes.
+
+We can use that to determine the indexe entries based on the specified filter.
+
+* Create a DESC index on name field of student collection if the age of student is less than 18
+
+````mongo
+db.student.createIndex(
+    {name:-1},
+    {partialFilterExpression:{age: {$lt:15}})
+````
+
+### Compound
+
+We can create indexes on multiple fields
+
+* Create an index on bname and author fields, ASC in bname and DESC in author.
+
+````mongo
+db.book.createIndex({bname:1,author:-1})
+````
+
+Will be  ASC sorted first by bname and then DESC sort by author.
+
+## Collection
+
+### Create collection
+
+createCollection accepts a second(optional) parameter
+
+````mongo
+db.createCollection("newCollection", {capped :true, autoIndexId : true, size : 6142800, max :
+10000})
+````
+
+A collection can also be created during document insertion or index creation if the concerned collection doesn't exist.
+
+````mongo
+db.collection.insert(obj)
+````
+
+or
+
+````mongo
+db.collection.createIndex({ind_name:8})
+````
+
+will create the collection if it doesn't exist.
+
+### Drop a collection: drop
+
+````mongo
+db.collection.drop()
+````
+
+That methodes return true is the drop is success and false otherwise.
+
+## Aggregation
+
+## Bulk operations
