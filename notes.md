@@ -588,13 +588,13 @@ Indexes are constraints we make to a filed of collections in a database.
 
 ````mongo
 db.createCollection('book')
-db.insertMany([
+db.book.insertMany([
     {bname:'Les tresseurs de corde',author:'Jean Pliya'},
     {bname:'Le gong a bagaiyé',author:'Appolinaire AGBAZAHOU'},
     {bname:'La secrétaire particulière',author:'Jean Pliya'},
     {bname:'Un piège sans fin',author:'Ousmane Sembène'},
     {bname:'Une si longue lettre',author:'Mariama Ba'},
-    {bname:'Sous l'orage',author:'Seydou Badian'}
+    {bname:'Sous l\'orage',author:'Seydou Badian'}
 
 ])
 ````
@@ -661,7 +661,7 @@ db.book.getIndexes()
 
 We use  the dropIndex method to drop an indexe.
 
-We can specifier either the name of the indexe to drop or the concerned field with the value of the indexe for example when we don't know the name of the indexe.
+We can specifier either the name of the indexe to drop or the concerned field with the value of the indexe for example when we don't know the name of the index.
 
 * drop the index we just created on the author field:
 
@@ -806,4 +806,22 @@ That methodes return true is the drop is success and false otherwise.
 
 ## Aggregation
 
-## Bulk operations
+Aggregation operators are operators that can be applied to fields of collection.
+
+Mongodb provides aggregations to compute the sum, to get the count, the min and max, the average,  and perform much more operations on fields of collection.
+
+Let's consider that collection
+
+````mongo
+db.mark.insertMany([
+    {name:''}
+])
+````
+
+## Driver
+
+## Schema validation
+
+## Backup and restore data
+
+## Run js file
