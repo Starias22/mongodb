@@ -1596,4 +1596,4 @@ Relace the file type in the bash command above by csv.
 
 ++++++++++++++++++++++++++++++++++++++++++++++++
 
-$not $text, $where $unwind  $exist  $first $last python driver partial indexes , indexes creation
+$not $text, $where $unwind  $exist  $first $last python driver partial indexes , indexes creation join collections
