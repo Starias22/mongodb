@@ -84,6 +84,16 @@ Use the folllowing one to show all general config methods available
 db.help()
 ````
 
+## Mongodb basics data types
+
+* string
+* object
+* boolean
+* number
+* array
+* null
+* date
+
 ## Drop database
 
 Drop the selected database with:
@@ -303,7 +313,9 @@ or
 db.student.update({},{$set:{good:false},{multi:true}})
 ````
 
-````update```` can take a third(optional) parameter, which is an object with ````multi```` as key.
+````update```` can take a third(optional) parameter, which is an object  that specify how the update wiil be performed.
+
+That object can contains  ````multi```` as key.
 
 By default, ````multi```` ````false```` and then ony the first matching document is updted.
 
@@ -313,6 +325,23 @@ By setting ````multi```` to ````true````, we can also update all documents match
 
 ````mongo
 db.student.find(null,{_id:0,good:1})
+````
+
+It can also contains ````upsert```` as key.
+
+If ````upsert```` is set to true the document is inserted if the query criteria doesn't match.
+
+* Find  all students named 'Isidore' and insert one if not exists, with good field equals false
+
+````mongo
+db.student.update({name:'Isidore'},
+{$set:{good:false}},{multi:true,upsert:true})
+````
+
+* Check the result
+
+````mongo
+db.student.find({name:'Isidore'},{_id:0})
 ````
 
 #### replaceOne
@@ -330,14 +359,14 @@ The old record is totally replaced in that case, by the new specified.
 * check the result
 
 ````mongo
-db.student.find({only:true},{_id:false,only:true})
+db.student.find()
 ````
 
 ### Delete: remove, deleteMany, deleteOne
 
 #### Remove all documents matching a condition
 
-To remove all students of 12  years old, use:
+* remove all students of 12  years old:
 
 ````mongo
 db.student.remove({age:12})
@@ -351,7 +380,7 @@ db.student.deleteMany({age:12})
 
 #### Remove the first document matching a condition
 
-To remove the first student of 12  years old, use:
+* remove the first student of 12  years old:
 
 ````mongo
 db.student.remove({age:12},true)
@@ -365,7 +394,7 @@ db.student.deleteOne({age:12})
 
 #### Remove all documents inside a collection
 
-To remove all documents of student, use:
+* remove all documents of student:
 
 ````mongo
 db.student.remove({})
@@ -430,13 +459,197 @@ db.mark.find(null,{_id:false}).pretty()
 
 ### More update operators
 
-\$push: add a value to an array
+#### on arrays
 
-\$pull: remove a value from an array
+##### \$pop
 
-\$pop: remove the first or the last value of an array
+ remove the first or the last value of an array
 
-## Query operators: not,and,or
+* remove the first mark value of each student
+
+ ````mongo
+db.mark.updateMany({},{$pop:{values:1}})
+
+````
+
+* check the result
+
+````mongo
+db.mark.find(null,{_id:false}).pretty()
+````
+
+* remove the last mark value of students who have 11 as a mark
+
+ ````mongo
+db.mark.updateMany({values:11},
+{$pop:{values:-1}})
+
+````
+
+* check the result
+
+````mongo
+db.mark.find(null,{_id:false}).pretty()
+````
+
+##### \$push
+
+ add a value at to the back of an array
+
+* add 20 as mark value for the first student
+
+ ````mongo
+db.mark.updateOne({},
+{$push:{values:20}})
+````
+
+* check the result
+
+````mongo
+db.mark.find(null,{_id:false}).pretty()
+````
+
+##### \$addToSet
+
+ similar to \$push but omits and or avoid duplicate values.
+
+* add 20 as mark value for the first student
+
+ ````mongo
+db.mark.updateOne({},
+{$addToSet:{values:20}})
+````
+
+* check the result
+
+````mongo
+db.mark.find(null,{_id:false}).pretty()
+````
+
+##### \$pull
+
+ remove from an array any value equals the one specified.
+
+* remove for each student, if exists, 11s from mark values
+
+ ````mongo
+db.mark.updateMany({},
+{$pull:{values:11}})
+````
+
+There will not be any 11 as mark value now.
+
+* check the result
+
+````mongo
+db.mark.find(null,{_id:false}).pretty()
+````
+
+#### on fields
+
+### \$set
+
+set document value
+
+### \$currentDate
+
+set field value to the current date
+
+* replace the mark values of the first student by the current date
+
+````mongo
+db.mark.updateOne({},
+//use a boolean
+{$currentDate:{values:true}})
+````
+
+### \$rename
+
+rename field
+
+* for each student,rename the field values to 'mark_of_students'
+
+ ````mongo
+db.mark.updateMany({},
+{$rename:{values:'mark_of_students'}})
+````
+
+* check the result
+
+````mongo
+db.mark.find(null,{_id:false}).pretty()
+````
+
+### \$unset
+
+remove field value from document
+
+* for each student,remove the field  'mark_of_students'
+
+ ````mongo
+db.mark.updateMany({},
+{$unset:{'mark_of_students':true}})
+````
+
+* check the result
+
+````mongo
+db.mark.find().pretty()
+````
+
+### \$inc
+
+increment or decrement(add positive or negative value to) field value
+
+* Let's consider these people
+
+````mongo
+db.people.insertMany
+([{name:'Roland',good:true},
+{name:'François',age:15},
+{name:'Jane',good:true},
+{name:'Tresoral',age:15},
+{name:'Grenade',age:28,}])
+````
+
+* Show ages of people
+
+````mongo
+db.people.find({},{_id:false,age:true})
+````
+
+* add 2 to  the age of each person
+
+````mongo
+db.people.update({},
+            {$inc:{age:2}},
+            {multi:true}
+)
+````
+
+* Show again ages of people
+
+````mongo
+db.people.find({},{_id:false,age:true})
+```
+
+* subtract 4 from  the age of each person
+
+````mongo
+db.people.update({},
+            {$inc:{age:-4}},
+            {multi:true}
+)
+````
+
+* Show again ages of people
+
+````mongo
+db.people.find({},{_id:false,age:true})
+```
+
+
+## Query operators
 
 * Create a collection named person
 
@@ -444,7 +657,7 @@ db.mark.find(null,{_id:false}).pretty()
 db.createCollection('person)
 ````
 
-* check the connection is created
+* assure the collection is created
 
 ````mongo
 show collections
@@ -456,11 +669,16 @@ show collections
 db.person.insertMany([
     {name:'Jonh',age:23},
     {name:'Emilie',age:15},
+    {name:'Ezéchiel',age:18},
     {name:'Pio'},
+    {name:'Mathias',age:15},
     {name:'André',age:13},
     {name:'Saoul'},
-    {name:'André',age:13},
-    {name:'Gildas',age:13}
+    {name:'Perez',age:13},
+    {name:'Gildas',age:13},
+    {name:'Henry',age:18},
+    {name:'Jacob',age:20},
+    {name:'Octave',age:20}
 ])
 ````
 
@@ -470,21 +688,103 @@ db.person.insertMany([
 db.person.find().pretty()
 ````
 
-### \$not
+### Comparison operators
 
-* find  the name of all people whose age is not 13
+#### \$eq
 
-````mongodb
-db.person.find({age:{$not:13}},{_id:0,name:1})
+equal
+
+* Get people of 13 years old
+
+````mongo
+db.person.find({age:13})
 ````
 
-* find  the name of all people whose age is not  null(is  specified)
+* Do the same using \$eq
 
-````mongodb
-db.person.find({age:{$not:null}},{_id:0,name:1})
+````mongo
+db.person.find({age:{$eq:13}})
 ````
 
-### \$and
+* find  the name of all people whose age is not specified(null)
+
+````mongodb
+db.person.find({age:{$eq:null}},{_id:0,name:1})
+````
+
+#### \$ne
+
+not equal
+
+* find name of people whose age is not 13
+
+````mongo
+db.person.find({age:{$ne:13}},{_id:0,name:1})
+````
+
+#### \$gt
+
+greater than
+
+* find name of people whose age is above 13
+
+````mongo
+db.person.find({age:{$gt:13}},{_id:0,name:1})
+````
+
+#### \$gte
+
+greater than or equal
+
+* find name and age of people  are major
+
+````mongo
+db.person.find({age:{$gte:18}},{_id:0})
+````
+
+#### \$lt
+
+less than
+
+* find name and age of people who are minor
+
+````mongo
+db.person.find({age:{$lt:18}},{_id:0})
+````
+
+#### \$lte
+
+less than or equal
+
+* find name of people whose age is 15 or less
+
+````mongo
+db.person.find({age:{$lte:15}},{_id:0,name:1})
+````
+
+#### \$in
+
+in
+
+* find name and age of people whose age is 15, 18 or 20
+
+````mongo
+db.person.find({age:{$in:[15,18,20]}},{_id:0})
+````
+
+### Logical operators
+
+#### \$not
+
+not cannot be empty({}) ,nor null
+
+* find  people whose
+
+````mongo
+db.person.find({name:{$not:{}}})
+````
+
+#### \$and
 
 * find the  first person whose name is 'Gildas' and age is 13
 
@@ -497,9 +797,22 @@ db.person.findOne({
         })
 ````
 
-### \$or
+* find  the name and age of people whose age is in the range [12;18] and not equal to 15
 
-* find all people whose name is 'Gildas' or age is 13 or age is null.
+````mogo
+db.person.find({
+    $and:[
+        {age:{$gte:12}},
+        {age:{$lte:18}},
+        {age:{$ne:15}}
+        ]
+        },
+        {_id:false})
+````
+
+#### \$or
+
+* find all people whose name is 'Gildas' or age is either 13 or  null.
 
 ````mongodb
 db.person.find({
@@ -511,36 +824,76 @@ db.person.find({
         })
 ````
 
-### \$in
+#### \$nor
 
-That operator works as same as the \$or and \$and operators.
+* find name of  all people whose name is neither 'Gildas' nor 'Ezéchiel', nore 'André'.
 
-### Comparaison operators: \$gte, \$lte, \$gt, \$lt
+````mongodb
+db.person.find({
+    $nor:[
+        {name:'Gildas'},
+        {name:'Ezéchiel'},
+        {name:'André'}
+        ]
+        },
+        {_id:0,name:1})
+````
 
-The four folllowing operator are used as same as the $not operator.
+* find name and age of  all people whose name is neither 'Gildas', nor 'André' and whose age is not 18
 
-#### \$gte
+````mongodb
+db.person.find({
+    $nor:[
+        {name:'Gildas'},
+        {name:'André'},
+        {age:18}
+        ]
+        },
+        {_id:0})
+````
 
-greater than or equal
+### Evaluation operators
 
-#### \$lte
+#### \$regex
 
-less than or equal
+* get people whose name contains a
 
-#### \$gt
+````mongo
+db.person.find({name:{$regex:'a'}})
+````
 
-greater than
+* get people whose name  starts with 'M'
 
-#### \$lt
+````mongo
+db.person.find({name:{$regex:'.{0}M'}})
+````
 
-less than
+* get people whose name  ends with 's'
+
+````mongo
+db.person.find({name:{$regex:'s.{0}'}})
+````
+
+#### \$text
+
+#### \$where
+
+++++++++++++++
+
+* get people whose name  ends with 's'
+
+````mongo
+db.person.find({$where:{age:15}})
+````
+
++++++++++++++++
 
 ## limit,skip,sort,count
 
-* limit first three(3) documents of person
+* limit  the results to the first three(3) documents.
 
 ````mongo
-db.find().limit()
+db.find().limit(3)
 ````
 
 * list all ages in ASC order
@@ -810,18 +1163,437 @@ Aggregation operators are operators that can be applied to fields of collection.
 
 Mongodb provides aggregations to compute the sum, to get the count, the min and max, the average,  and perform much more operations on fields of collection.
 
-Let's consider that collection
+Let's consider the following collection
 
 ````mongo
-db.mark.insertMany([
-    {name:''}
+db.marks.insertMany([
+    {name:'Andre', mark:15, subject:'math'},
+    {name:'Peter', mark:18, subject:'english'},
+    {name:'Saoul', mark:12, subject:'french'},
+    {name:'Peter', mark:09, subject:'french'},
+    {name:'Saoul', mark:15, subject:'french'},
+    {name:'Andre', mark:15, subject:'math'},
+    {name:'Peter', mark:18, subject:'math'},
+    {name:'Saoul', mark:11, subject:'english'},
+    {name:'Andre', mark:8, subject:'english'}
+    ])
+````
+
+* show student marks documents excluding the primary key field
+
+````mongo
+db.marks.find({},{_id:false}).pretty()
+````
+
+Aggregate operations are used with the ````aggregate```` function.
+
+aggregate without parameter is as same as find without parameter.
+
+````mongo
+db.marks.aggregate()
+````
+
+* get the group of subject
+
+````mongo
+db.marks.aggregate({
+    $group:{
+        _id:'$subject'
+        }
+})
+````
+
+* group of the mark obtained
+
+````mongo
+db.marks.aggregate({
+    $group:{
+        _id:'$mark'
+        }
+})
+````
+
+* group of the students
+
+````mongo
+db.marks.aggregate({
+    $project:{
+        _id:0,
+        'Subjects of assessment':'$subject',
+        }
+})
+````
+
+* get the  5 first documents
+
+````mongo
+db.marks.aggregate({
+    $limit:5
+})
+````
+
+* select from the third document
+
+````mongo
+db.marks.aggregate({
+    $skip:2
+})
+````
+
+* ASC sort documents on name field
+
+````mongo
+db.marks.aggregate({
+    $sort:{name:1}
+})
+````
+
+* DESC sort document on mark field
+
+````mongo
+db.marks.aggregate({
+    $sort:{mark:-1}
+})
+````
+
+* DESC sort documents on mark field, ASC sort on name field
+
+````mongo
+db.marks.aggregate({
+    $sort:{mark:-1,name:1}
+})
+````
+
+* Get randomly 3 documents from the collection of marks
+
+````mongo
+db.marks.aggregate({
+    $sample:{size:3}
+})
+````
+
+* find documents where mark=15
+
+````mongo
+db.marks.aggregate({
+    $match:{mark:15}
+})
+````
+
+* Add the field 'field_name' to the mark collection and set all values of doc to 899
+
+````mongo
+db.marks.aggregate({
+    $addFields:{field_name:899}
+})
+````
+
+* add more than one field
+
+````mongo
+db.marks.aggregate({
+    $addFields:{field_name:true,second:'test'}
+})
+````
+
+We can embed(nest) aggregate operators.
+
+* Count the number of documents for each subject
+
+````mongo
+db.marks.aggregate({
+    $group:{
+        _id:'$subject',
+        nb_marks:{$sum:1} //add 1 for each 
+        }
+})
+````
+
+* get the mark totalised by each student
+
+````mongo
+db.marks.aggregate({
+    $group:{
+        _id:'$subject',
+        'mark tot:':{$sum:'$mark'}
+        }
+})
+````
+
+* get the average of the marks of  each student
+
+````mongo
+db.marks.aggregate({
+    $group:{
+        _id:'$name',
+        'definitive mark':{$avg:'$mark'}
+        }
+})
+````
+
+* get the minimum and the maximum mark and the decisive mark  obtained by each student
+
+````mongo
+db.marks.aggregate({
+    $group:{
+        _id:'$name',
+        'min mark':{$min:'$mark'},
+        'max mark':{$max:'$mark'},
+        final:{$avg:'$mark'}
+        }
+})
+````
+
+We can  also use more than one aggregate operator in the function aggregate. In that case we should specify as parameter to ````aggregate````, the array containing the list of the concerned aggregate operators.
+
+* get the list of the max marks of students(without their name)
+
+````mongo
+db.marks.aggregate([
+    {$group:{
+        _id:'$name',
+        'max mark':{$max:'$mark'}
+        }},
+    {$project:{
+            _id:0//exclude _id,
+            //,'max mark':0 exclude
+        }}
 ])
 ````
 
+* show the name and the adverage of the more brilliant student
+
+````mongo
+db.marks.aggregate([
+    {$group:{
+        _id:'$name',
+         'avg':{$avg:'$mark'}
+        }},
+        //sort in DESC of avg
+    {$sort:{'avg':-1}},
+    //get the first document
+    {$limit:1}
+])
+````
+
+* show the documents and add a field specifing either the student
+
+++++++++++++++++++++++++++++
+
+````mongo
+db.marks.aggregate([
+    {$project:{
+        _id:false,
+        mark:'$mark'
+
+    }},
+        //add the validation field
+    {$addFields:{
+        'validate':
+        {mark:{'$gte':12}}
+        //{'$gte':{'mark':12}}
+        }}
+])
+````
+
++++++++++++++++++++++++++++++
+
 ## Driver
+
+Drivers allow us touse programming language to interact with databases.
+
+There are MOngo  drivers for many programming languages such as C, C++, java, Python, etc.
+
+### Python driver
+
+The python mongodb driver is called pymongo.
+
+#### Installlation
+
+pip install pymongo
+
+#### Usage
+
+## Save document
+
+We can alse use the method ````save```` to insert a document in a collection. The difference with insert is that during document with save by specifing a primary key(_id for example) that already exists, the document is updated.
+
+The usage is as same as insert.
 
 ## Schema validation
 
-## Backup and restore data
+Mongo database collections are used in flexibe way. By default, contrayry to relational databases, there is no requirement in structure for the different documents. The documents we insert may not hava the same structure.
+
+We can insert for example:
+
+````mongo
+{name:'Henry',age:25}
+````
+
+and
+
+````mongo
+{mark:15,good:true}
+````
+
+as documents in the same collection.
+
+That can be avoide. We can pre-define the sructure, the schama of our database in mongodb by using the operator ````$jsonSchema````: that is called ````schema validation````.
+
+That operator is using during the creation of the concerned colllection(with the method ````createCollection````)
+
+In fact, the method ````createCollection```` can take a part from the name of the collection to create, which a string,  a second optional parameter which is an object that contains the characteristics of the collection such as the fields with their data type, the eventual required field(s), etc.
+
+### Example
+
+````mongodb
+db.createCollection("posts", {
+    validator: {
+      $jsonSchema: {
+        //the data type of a document
+        bsonType: "object",
+        required: [ "title", "body" ],
+        properties:{
+            //list the fields of the collection
+          title: {
+            bsonType: "string",
+            description: "Title of post - Required."
+          },
+          body: {
+            bsonType: "string",
+            description: "Body of post - Required."
+          },
+          category: {
+            bsonType: "string",
+            description: "Category of post - Optional."
+          },
+          likes: {
+            bsonType: "int",
+            description: "Post like count. Must be an integer - Optional."
+          },
+          tags: {
+            bsonType: ["string"],
+            description: "Must be an array of strings - Optional."
+          },
+          date: {
+            bsonType: "date",
+            description: "Must be a date - Optional."
+          }
+        }
+      }
+    }
+  })
+````
+
+* Show these properties using:
+
+````mongo
+db.posts.exists()
+````
+
+* Insert documents inside that collection
+
+````mongo
+db.posts.insert({title:'title of my post',body:'body of my post'})
+````
+
+There, all the fields required by the collection(title and body) are provided and in the document and their data type (string) is valid. So the insertion will be successfull.
+
+ We get an error while inserting a document that doesn't obey the validation schema.
+
+### Example-validation failure: required fields missing
+
+* Run:
+
+````mongo
+db.posts.insert({wrong:'fff'})
+````
+
+* Run this to assure the document is not inserted
+
+````mongodb
+db.posts.find()
+````
+
+In that example, validation will fail simply because, for examples:
+
+* title and body fields are required but they are not specified in the docuemnt
+* the field named ````wrong```` provided doesn't belong to the list of fields to provide.
+
+Other error such as wrong field type will lead insertion to fail too.
+
+### Example-validation failure: wrong field type provided
+
+* Run
+
+````mongo
+db.posts.insert({title:2,body:'body of my post'})
+````
+
+In that example, title should be a string but an integer is provided instead.
 
 ## Run js file
+
+We can run a java script(js) file that contain mongodb script using either the bash terminal or the the mongodb shell.
+
+### Via mongodb shell
+
+We use the function ````load```` by specifing the path of the js file to run(as a string).
+
+````mongo
+load('path/to/js/file.js')
+````
+
+### Via bash terminal
+
+````bash
+mongo localhost:27017/mydb path/to/my/jsfile.js
+````
+
+ This operation executes the 'path/to/my/jsfile.js' script in a mongo shell that connects to the mydb database on the mongod instance accessible via the localhost interface on port 27017. localhost:27017 is not mandatory as this
+is the default port mongodb uses.
+
+## Backup and restore data
+
+### Backing up
+
+#### Basic mongodump of local default mongod instance
+
+````bash
+mongodump --db mydb --gzip --out folder/path
+````
+
+This command will dump a bson gzipped archive of your local mongod 'mydb' database to the
+'folder/path' directory
+
+#### Basic mongorestore of local default mongodump
+
+````bash
+mongorestore --db mydb dump_dir --drop --gzip
+````
+
+This command will first drop your current 'mydb' database and then restore your gzipped bson dump from the 'dump_dir' archive dump file.
+
+#### Import file to mongodb
+
+##### mongoimport with JSON
+
+````bash
+mongoimport --db test --collection "coll_name" --drop --type json --host
+"localhost:47019" --file "path/to/json/file.json"
+````
+
+* --db : name of the database where data is to be imported to
+* --collection: name of the collection in the database where data is to be improted
+* --drop : drops the collection first before importing
+* --type : document type which needs to be imported. default JSON
+* --host : mongodb host and port on which data is to be imported.
+* --file : path where the json file is
+
+##### mongoimport with csv
+
+Relace the file type in the bash command above by csv.
+
+++++++++++++++++++++++++++++++++++++++++++++++++
+
+$not $text, $where $unwind  $exist  $first $last python driver partial indexes , indexes creation

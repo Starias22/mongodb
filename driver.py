@@ -23,5 +23,7 @@ x=collection.delete_one({'name':'zzz'})
 print('deleted',x)
 print (collection.find_one())
 
+#help(MongoClient)
 
-
+import pymongo
+help(pymongo)
