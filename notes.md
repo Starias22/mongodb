@@ -776,7 +776,13 @@ db.person.find({age:{$in:[15,18,20]}},{_id:0})
 
 #### \$not
 
-not cannot be empty({}) ,nor null
+Allows to get alll documents where a condition is not verified
+
+* get all people whose age is not 20
+
+````mongo
+db.person.find({ age: { $not: { $eq: 20 } } })
+````
 
 * find  people whose
 
@@ -874,9 +880,33 @@ db.person.find({name:{$regex:'.{0}M'}})
 db.person.find({name:{$regex:'s.{0}'}})
 ````
 
+### \$exists
+
+Allows to get documents where a field exist or not
+
+* get people whose age is not specified
+
+````mongo
+db.person.find({age:{$exists:false}})
+````
+
+* get people whose age is specified
+
+````mongo
+db.person.find({age:{$exists:true}})
+````
+
 #### \$text
 
 #### \$where
+
+\$where is used to pass a js expression as a query
+
+* find all documents where the sum of age and the length of name is greater than or equaal to 25
+
+````mongo
+db.person.find({ $where: function() { return (this.age + this.name.length) >=25;} })
+````
 
 ++++++++++++++
 
@@ -1203,6 +1233,12 @@ db.marks.aggregate({
 })
 ````
 
+db.marks.aggregate({
+    $group:{
+        _id:'$subject',
+        }
+})
+
 * group of the mark obtained
 
 ````mongo
@@ -1304,7 +1340,7 @@ We can embed(nest) aggregate operators.
 db.marks.aggregate({
     $group:{
         _id:'$subject',
-        nb_marks:{$sum:1} //add 1 for each 
+        nb_marks:{$sum:1} //add 1 for each
         }
 })
 ````
@@ -1340,6 +1376,28 @@ db.marks.aggregate({
         'min mark':{$min:'$mark'},
         'max mark':{$max:'$mark'},
         final:{$avg:'$mark'}
+        }
+})
+````
+
+* group students mark by name and get the first document for each group
+
+````mongo
+db.marks.aggregate({
+    $group:{
+        _id:'$subject',
+        xx:{$first:'$name'}
+        }
+})
+````
+
+* group students mark by name and get the last document for each group, onlythe name field and the _id one are considered
+
+````mongo
+db.marks.aggregate({
+    $group:{
+        _id:'$subject',
+        result:{$last:'$name'}
         }
 })
 ````
@@ -1596,7 +1654,7 @@ Relace the file type in the bash command above by csv.
 
 ++++++++++++++++++++++++++++++++++++++++++++++++
 
-$not $text, $where $unwind  $exist  $first $last
+$search $caseSensitive $$diacriticSensitive $text,  $unwind
 
 partial indexes , indexes creation
 
